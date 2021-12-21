@@ -1,29 +1,24 @@
-【入门笔记】
-
-
-
 # Kubernetes 入门笔记
 
 
 
 ## 前置内容
 
-- Linux
-- Docker
+- Linux | [Linux 入门笔记]()
+- Docker | [Docker 入门笔记]()
 
 
 
 ## 目录
 
-- 1  K8s 概念和架构
+- 1  Kubernetes 概念和架构
 
-- 2  从零搭建K8s集群
-
-  - 基于客户端工具kubeadm
-
-  - 基于二进制方式
-
-- 3  K8s 核心概念
+- 2  从零搭建 Kubernetes 集群
+  - 基于客户端工具 kubeadm
+  
+  - 基于二进制包
+  
+- 3  Kubernetes 核心概念
   - Pod
   - Controller
   - Service Ingress
@@ -32,88 +27,100 @@
   
 - 4  搭建集群监控平台系统
 
-- 5  从零搭建高可用K8s集群
+- 5  从零搭建高可用 Kubernetess 集群
 
 - 6  在集群环境中部署项目
 
 
 
-## 1  K8s 概述和架构
+## 1  Kubernetes 概述和架构
 
-### 1.1  K8s 概述
+### 1.1 Kubernetes 简介
 
-Kubernetes，简称K8s，中间8个字母。
+Kubernetes，首字母K，尾字母s，中间8个字母，简称K8s。
 
-- K8s是谷歌在2014年发布的容器化集群管理系统
-- 使用k8s进行容器化应用部署
-- 使用k8s利于应用扩展
-- k8s目标实施让部署容器化应用更加简洁和高效
+### 1.2 Kubernetes 功能
 
-### 1.2  K8s功能
+> 目前只需要知道 Kubernetes 有以下 9 个功能，关于这 9 个功能，后面详细介绍。（我也不知道这些是啥玩意，先记住名词再说）
 
-（1）自动装箱
+1. 自动装箱
 
-基于容器对应用运行环境的资源配置要求自动部署应用容器
+   - 基于容器对应用运行环境的资源配置要求自动部署应用容器
 
-（2）自我修复(自愈能力)
+2. 自我修复
 
-当容器失败时，会对容器进行重启
+   - 当容器失败时，会对容器进行重启
 
-当所部署的Node节点有问题时，会对容器进行重新部署和重新调度
+   - 当所部署的Node节点有问题时，会对容器进行重新部署和重新调度
 
-当容器未通过监控检查时，会关闭此容器直到容器正常运行时，才会对外提供服务
+   - 当容器未通过监控检查时，会关闭此容器直到容器正常运行时，才会对外提供服务
 
-（3）水平扩展
+3. 水平扩展
 
-通过简单的命令、用户UI 界面或基于CPU 等资源使用情况，对应用容器进行规模扩大或规模剪裁
+   - 通过简单的命令、用户UI 界面或基于CPU 等资源使用情况，对应用容器进行规模扩大或规模剪裁
 
-> 当我们有大量的请求来临时，我们可以增加副本数量，从而达到水平扩展的效果
+   - 当我们有大量的请求来临时，我们可以增加副本数量，从而达到水平扩展的效果
 
-（4）服务发现
+4. 服务发现
 
-用户不需使用额外的服务发现机制，就能够基于Kubernetes 自身能力实现服务发现和负载均衡
+   - 用户不需使用额外的服务发现机制，就能够基于Kubernetes 自身能力实现服务发现和负载均衡
 
-> 对外提供统一的入口，让它来做节点的调度和负载均衡， 相当于微服务里面的网关？
+5. 滚动更新
+   - 可以根据应用的变化，对应用容器运行的应用，进行一次性或批量式更新
 
-（5）滚动更新
+6. 版本回退
+   - 可以根据应用部署情况，对应用容器运行的应用，进行历史版本即时回退
 
-可以根据应用的变化，对应用容器运行的应用，进行一次性或批量式更新
+7. 密钥和配置管理
 
-> 添加应用的时候，不是加进去就马上可以进行使用，而是需要判断这个添加进去的应用是否能够正常使用
+   - 在不需要重新构建镜像的情况下，可以部署和更新密钥和应用配置，类似热部署。
 
-（6）版本回退
+8. 存储编排
 
-可以根据应用部署情况，对应用容器运行的应用，进行历史版本即时回退
+   - 自动实现存储系统挂载及应用，特别对有状态应用实现数据持久化非常重要
 
-> 类似于Git中的回滚
+   - 存储系统可以来自于本地目录、网络存储(NFS、Gluster、Ceph 等)、公共云存储服务
 
-（7）密钥和配置管理
+9. 批处理
 
-在不需要重新构建镜像的情况下，可以部署和更新密钥和应用配置，类似热部署。
+   - 提供一次性任务，定时任务；满足批量数据处理和分析的场景
 
-（8）存储编排
+### 1.3 Kubernetes 架构组件
 
-自动实现存储系统挂载及应用，特别对有状态应用实现数据持久化非常重要
+**Kuebrnetes 架构图**
 
-存储系统可以来自于本地目录、网络存储(NFS、Gluster、Ceph 等)、公共云存储服务
+> Kubernetes 架构主要包含两部分：Master（主控节点）和 Work node（工作节点）。
 
-（9）批处理
+---
 
-提供一次性任务，定时任务；满足批量数据处理和分析的场景
+图1 
 
-### 1.3  K8s架构组件
+<img src="./images/k8s架构1.png"  >
 
-K8S架构主要包含两部分：Master（主控节点）和 node（工作节点）
+----
 
-k8s 集群控制节点，对集群进行调度管理，接受集群外用户去集群操作请求；
+图2
 
-- **master**：主控节点
+<img src="./images/k8s架构2.png"  >
+
+-----
+
+图3
+
+<img src="./images/k8s架构3.png"  >
+
+---
+
+**Kubernetes 组件**
+
+- **Master**：主控节点
   - API Server：集群统一入口，以restful风格进行操作，同时交给etcd存储
     - 提供认证、授权、访问控制、API注册和发现等机制
   - scheduler：节点的调度，选择node节点应用部署
   - controller-manager：处理集群中常规后台任务，一个资源对应一个控制器
   - etcd：存储系统，用于保存集群中的相关数据
-- **Work node**：工作节点
+
+- **Worker node**：工作节点
   - Kubelet：master派到node节点代表，管理本机容器
     - 一个集群中每个节点上运行的代理，它保证容器都运行在Pod中
     - 负责维护容器的生命周期，同时也负责Volume(CSI) 和 网络(CNI)的管理
@@ -121,122 +128,116 @@ k8s 集群控制节点，对集群进行调度管理，接受集群外用户去�
 - 容器运行环境【**Container Runtime**】
   - 容器运行环境是负责运行容器的软件
   - Kubernetes支持多个容器运行环境：Docker、containerd、cri-o、rktlet以及任何实现Kubernetes CRI (容器运行环境接口) 的软件。
-- fluentd：是一个守护进程，它有助于提升 集群层面日志
+- fluentd：是一个守护进程，它有助于提升集群层面日志
 
-### 1.4  K8s核心概念
+### 1.4 Kubernetes 核心概念
 
-（1） Pod
+1. Pod
+   - Pod是K8s中最小的单元
+   - 一组容器的集合
+   - 共享网络【一个Pod中的所有容器共享同一网络】
+   - 生命周期是短暂的（服务器重启后，就找不到了）
 
-- Pod是K8s中最小的单元
-- 一组容器的集合
-- 共享网络【一个Pod中的所有容器共享同一网络】
-- 生命周期是短暂的（服务器重启后，就找不到了）
+2. Volume
+   - 声明在Pod容器中可访问的文件目录
+   - 可以被挂载到Pod中一个或多个容器指定路径下
+   - 支持多种后端存储抽象【本地存储、分布式存储、云存储】
 
-（2）Volume
+3. Controller
 
-- 声明在Pod容器中可访问的文件目录
-- 可以被挂载到Pod中一个或多个容器指定路径下
-- 支持多种后端存储抽象【本地存储、分布式存储、云存储】
+   - 确保预期的pod副本数量【ReplicaSet】
+   - 无状态应用部署【Deployment】
+     - 无状态就是指，不需要依赖于网络或者ip
 
-（3）Controller
+   - 有状态应用部署【StatefulSet】
+     - 有状态需要特定的条件
 
-- 确保预期的pod副本数量【ReplicaSet】
-- 无状态应用部署【Deployment】
-  - 无状态就是指，不需要依赖于网络或者ip
-- 有状态应用部署【StatefulSet】
-  - 有状态需要特定的条件
-- 确保所有的node运行同一个pod 【DaemonSet】
-- 一次性任务和定时任务【Job和CronJob】
+   - 确保所有的node运行同一个pod 【DaemonSet】
 
-（4）Deployment
+   - 一次性任务和定时任务【Job和CronJob】
 
-- 定义一组Pod副本数目，版本等
-- 通过控制器【Controller】维持Pod数目【自动回复失败的Pod】
-- 通过控制器以指定的策略控制版本【滚动升级、回滚等】
+4. Deployment
 
-（5）Service
+   - 定义一组Pod副本数目，版本等
+   - 通过控制器【Controller】维持Pod数目【自动回复失败的Pod】
+   - 通过控制器以指定的策略控制版本【滚动升级、回滚等】
 
-- 定义一组pod的访问规则
-- Pod的负载均衡，提供一个或多个Pod的稳定访问地址
-- 支持多种方式【ClusterIP、NodePort、LoadBalancer】
+5. Service
+   - 定义一组pod的访问规则
+   - Pod的负载均衡，提供一个或多个Pod的稳定访问地址
+   - 支持多种方式【ClusterIP、NodePort、LoadBalancer】
 
-（6） Label
+6. Label
+   - label：标签，用于对象资源查询，筛选
+7. Namespace
+   - 命名空间，逻辑隔离
+   - 一个集群内部的逻辑隔离机制【鉴权、资源】
+   - 每个资源都属于一个namespace
+   - 同一个namespace所有资源不能重复
+   - 不同namespace可以资源名重复
 
-- label：标签，用于对象资源查询，筛选
+8. API
+   - 我们通过Kubernetes的API来操作整个集群
+   - 同时我们可以通过 kubectl 、ui、curl 最终发送 http + json/yaml 方式的请求给API Server，然后控制整个K8S集群，K8S中所有的资源对象都可以采用 yaml 或 json 格式的文件定义或描述
 
-（7）Namespace
+### 1.5 Kubernetes 工作原理
 
-​	命名空间，逻辑隔离
+**Kubernetes 工作原理图**
 
-- 一个集群内部的逻辑隔离机制【鉴权、资源】
-- 每个资源都属于一个namespace
-- 同一个namespace所有资源不能重复
-- 不同namespace可以资源名重复
+> 能看懂就看，看不懂就算了，俺也看不懂。
 
-（8）API
+---
 
-- 我们通过Kubernetes的API来操作整个集群
-
-- 同时我们可以通过 kubectl 、ui、curl 最终发送 http + json/yaml 方式的请求给API Server，然后控制整个K8S集群，K8S中所有的资源对象都可以采用 yaml 或 json 格式的文件定义或描述
-
-### 1.5   完整流程
-
-- 通过Kubectl提交一个创建RC（Replication Controller）的请求，该请求通过APlserver写入etcd
-- 此时Controller Manager通过API Server的监听资源变化的接口监听到此RC事件
-- 分析之后，发现当前集群中还没有它所对应的Pod实例
-- 于是根据RC里的Pod模板定义一个生成Pod对象，通过APIServer写入etcd
-- 此事件被Scheduler发现，它立即执行执行一个复杂的调度流程，为这个新的Pod选定一个落户的Node，然后通过API Server讲这一结果写入etcd中
-- 目标Node上运行的Kubelet进程通过APiserver监测到这个"新生的Pod.并按照它的定义，启动该Pod并任劳任怨地负责它的下半生，直到Pod的生命结束
-- 随后，我们通过Kubectl提交一个新的映射到该Pod的Service的创建请求
-- ControllerManager通过Label标签查询到关联的Pod实例，然后生成Service的Endpoints信息，并通过APIServer写入到etod中，
-- 接下来，所有Node上运行的Proxy进程通过APIServer查询并监听Service对象与其对应的Endponts信息，建立一个软件方式的负载均衡器来实现Service访问到后端Pod的流量转发功能
+<img src="./images/k8s原理1.png">
 
 
 
 ## 2  从零开始搭建K8s集群
 
-### 2.1  基于客户端工具kubeadm
+### 2.1 基于客户端工具 kubeadm
 
 kubeadm是官方社区推出的一个用于快速部署kubernetes集群的工具。
 
 这个工具能通过两条指令完成一个kubernetes集群的部署：
 
-```
+```sh
 # 创建一个 Master 节点
 kubeadm init
 
-# 将一个 Node 节点加入到当前集群中
+# 将一个 Worker node 节点加入到当前集群中
 kubeadm join <Master节点的IP和端口 >
 ```
 
-#### 2.1.1  安装步骤
+#### 2.1.1 安装步骤
 
 使用kubeadm方式搭建K8s集群主要分为以下几步：
 
-- 准备三台虚拟机，同时安装操作系统CentOS 7.x
-- 对三个安装之后的操作系统进行初始化操作
-- 在三个节点安装 docker kubelet kubeadm kubectl
-- 在master节点执行kubeadm init命令初始化
-- 在node节点上执行 kubeadm join命令，把node节点添加到当前集群
-- 配置CNI网络插件，用于节点之间的连通【失败了可以多试几次】
-- 通过拉取一个nginx进行测试，能否进行外网测试
+1. **【环境准备】**准备三台虚拟机，并安装操作系统 CentOS 7.x
+2. **【系统初始化】**对三个刚安装好的操作系统进行初始化操作
+3. **【安装工具】**在三个节点安装 `docker` `kubelet` `kubeadm` `kubectl`
+4. **【集群部署-master】**在master节点执行`kubeadm init`命令初始化
+5. **【集群部署-node】**在node节点上执行 `kubeadm join`命令，把node节点添加到当前集群
+6. **【安装网络插件】**配置CNI网络插件，用于节点之间的连通
+7. **【测试集群】**通过拉取一个nginx进行测试，能否进行外网测试
 
-####  2.1.2  安装要求
+####  2.1.2 安装要求
 
-在开始之前，部署Kubernetes集群机器需要满足以下几个条件：
+在开始之前，部署 Kubernetes 集群机器需要满足以下几个条件：
 
 - 一台或多台机器，操作系统 CentOS7.x-86_x64
-- 硬件配置：2GB或更多RAM，2个CPU或更多CPU，硬盘30GB或更多【注意master需要两核】
+- 硬件配置：2GB或更多RAM，2个CPU或更多CPU，硬盘30GB或更多**【注意】【注意】【注意】【master需要两核】**
 - 可以访问外网，需要拉取镜像，如果服务器不能上网，需要提前下载镜像并导入节点
 - 禁止swap分区
 
 #### 2.1.3  准备环境
 
-| 角色      | IP             |
-| --------- | -------------- |
-| k8smaster | 192.168.60.151 |
-| k8snode1  | 192.168.60.152 |
-| k8snode2  | 192.168.60.153 |
+> 不会配置环境的可以参考 [Linux 入门笔记 | 虚拟机 IP 配置]()
+
+| 角色      | IP             | 命令                                 | 配置  |
+| --------- | -------------- | ------------------------------------ | ----- |
+| k8smaster | 192.168.60.151 | `hostnamectl set-hostname k8smaster` | 2C 2G |
+| k8snode1  | 192.168.60.152 | `hostnamectl set-hostname k8snode1`  | 2C 2G |
+| k8snode2  | 192.168.60.153 | `hostnamectl set-hostname k8snode2`  | 2C 2G |
 
 #### 2.1.4  系统初始化
 
@@ -245,6 +246,7 @@ kubeadm join <Master节点的IP和端口 >
 ```
 # 关闭防火墙
 systemctl stop firewalld
+# 禁用firewalld服务
 systemctl disable firewalld
 
 # 关闭selinux
@@ -253,26 +255,20 @@ sed -i 's/enforcing/disabled/' /etc/selinux/config
 # 临时关闭
 setenforce 0  
 
+查看swap
+free
 # 关闭swap
 # 临时
 swapoff -a 
 # 永久关闭
 sed -ri 's/.*swap.*/#&/' /etc/fstab
 
-# 根据规划设置主机名【master节点上操作】
-hostnamectl set-hostname k8smaster
-# 根据规划设置主机名【node1节点操作】
-hostnamectl set-hostname k8snode1
-# 根据规划设置主机名【node2节点操作】
-hostnamectl set-hostname k8snode2
-
-# 在master添加hosts
+# 可以只在master添加hosts
 cat >> /etc/hosts << EOF
 192.168.60.151 k8smaster
 192.168.60.152 k8snode1
 192.168.60.153 k8snode2
 EOF
-
 
 # 将桥接的IPv4流量传递到iptables的链
 cat > /etc/sysctl.d/k8s.conf << EOF
