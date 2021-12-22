@@ -2177,7 +2177,7 @@ service/web1         NodePort    10.111.61.143   <none>        80:30344/TCP   6s
 
 然后我们访问对应的url，即可看到 nginx了 `http://192.168.60.151:30344/`
 
-<img src="./images/nginx.png">
+<img src="./images/nginx.png" style="zoom:150%;" >
 
 #### 3.2.6 升级回滚和弹性收缩
 
