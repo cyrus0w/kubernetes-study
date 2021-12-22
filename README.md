@@ -2296,11 +2296,107 @@ web-bbcf684cb-vmwb9   0/1     ContainerCreating   0          4s
 web-bbcf684cb-vnk5w   0/1     ContainerCreating   0          4s
 ```
 
-### 3.3  Service Ingress
+### 3.3  Kubernetes 配置管理
 
-### 3.4  RABC
+#### 3.3.1 Secret
 
-### 3.5  Helm
+> Secret的主要作用就是加密数据，然后存在etcd里面，让Pod容器以挂载Volume方式进行访问
+
+应用场景：对 用户名 和 密码 进行加密
+
+一般场景的是对某个字符串进行base64编码 进行加密：
+
+```sh
+echo -n 'admin' | base64
+```
+
+**1、变量形式挂载到Pod**
+
+- 创建secret加密数据的yaml文件 secret.yaml
+- 然后是使用以下命令创建一个Pod
+
+**2、数据卷形式挂载到Pod**
+
+#### 3.3.2 ConfigMap
+
+> ConfigMap作用是存储不加密的数据到etcd中，让Pod以变量或数据卷Volume挂载到容器中
+
+应用场景：配置文件
+
+创建配置文件 `redis.properties`
+
+```sh
+redis.port=127.0.0.1
+redis.port=6379
+redis.password=123456
+```
+
+创建ConfigMap
+
+```sh
+kubectl create configmap redis-config --from-file=redis.properties
+```
+
+**1、数据卷形式挂载到Pod**
+
+**2、变量形式挂载到Pod**
+
+### 3.4  Kubernetes 集群安全机制
+
+#### 3.4.1 集群安全机制 概述
+
+当我们访问K8S集群时，需要经过三个步骤完成具体操作：
+
+- 认证
+- 鉴权【授权】
+- 准入控制
+
+进行访问的时候，都需要经过 apiserver， apiserver做统一协调，比如门卫
+
+- 访问过程中，需要证书、token、或者用户名和密码
+- 如果访问pod需要serviceAccount
+
+**1、认证**
+
+对外不暴露8080端口，只能内部访问，对外使用的端口6443
+
+客户端身份认证常用方式
+
+- https证书认证，基于ca证书
+- http token认证，通过token来识别用户
+- http基本认证，用户名 + 密码认证
+
+**2、鉴权**
+
+基于RBAC进行鉴权操作
+
+基于角色访问控制
+
+**3、准入控制**
+
+就是准入控制器的列表，如果列表有请求内容就通过，没有的话 就拒绝
+
+#### 3.4.2 RBAC 介绍
+
+> 基于角色的访问控制，为某个角色设置访问内容，然后用户分配该角色后，就拥有该角色的访问权限
+
+k8s中有默认的几个角色
+
+- role：特定命名空间访问权限
+- ClusterRole：所有命名空间的访问权限
+
+角色绑定
+
+- roleBinding：角色绑定到主体
+- ClusterRoleBinding：集群角色绑定到主体
+
+主体
+
+- user：用户
+- group：用户组
+- serviceAccount：服务账号
+
+#### 3.4.3 RBAC 鉴权
 
 
 
