@@ -1,3 +1,34 @@
+[README]
+
+
+
+```sh
+kubernetes-study:
+| -- images
+| -- TLS  # 以二进制包方式安装k8s所需软件
+     | -- etcd
+          | -- cfssl_linux-amd64
+          | -- cfssl-certinfo_linux-amd64
+          | -- cfssljson_linux-amd64
+          | -- etcd-v3.4.9-linux-amd64.tar.gz
+     | -- k8s
+          | -- kube-flannel.yml
+          | -- cni-plugins-linux-amd64-v0.8.6.tgz
+          | -- kubernetes-server-linux-amd64.tar.gz
+| -- README.md
+```
+
+
+
+- 学习时长：1 个月
+  - 第零周：Linux & Docker 
+  - 第一周：从零搭建 Kubernetes 集群
+  - 第二周：Kubernetes 核心概念 & 搭建集群监控平台系统
+  - 第三周：从零搭建高可用 Kubernetess 集群
+  - 第四周：在集群环境中部署项目
+
+
+
 # Kubernetes 入门笔记
 
 
@@ -2345,13 +2376,9 @@ kubectl create configmap redis-config --from-file=redis.properties
 
 #### 3.4.1 集群安全机制 概述
 
-当我们访问K8S集群时，需要经过三个步骤完成具体操作：
+当我们访问K8S集群时，需要经过三个步骤完成具体操作：`① 认证` `② 鉴权 ` `③ 准入控制`
 
-- 认证
-- 鉴权【授权】
-- 准入控制
-
-进行访问的时候，都需要经过 apiserver， apiserver做统一协调，比如门卫
+进行访问的时候，都需要经过 apiserver， apiserver做统一协调
 
 - 访问过程中，需要证书、token、或者用户名和密码
 - 如果访问pod需要serviceAccount
@@ -2398,6 +2425,54 @@ k8s中有默认的几个角色
 
 #### 3.4.3 RBAC 鉴权
 
+1、创建命名空间
+
+```sh
+# 查看已经存在的命名空间
+kubectl get namespace
+# 创建自己的命名空间
+kubectl create ns mytest
+```
+
+2、命名空间内创建Pod
+
+> 如果不创建命名空间，Pod默认在default
+
+```sh
+kubectl run nginx --image=nginx -n mytest
+```
+
+3、创建角色
+
+> 通过 rbac-role.yaml 进行创建
+>
+> tips: 这个角色只对pod有get 和 list 权限
+
+```yaml
+cat rbac-role.yaml
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: ctnrs
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+```
+
+通过yaml创建role
+
+```sh
+# 创建
+kubectl apply -f rbac-role.yaml
+# 查看
+kubectl get role -n mytest
+```
+
+
+
 
 
 ## 4  搭建集群监控平台系统
@@ -2430,7 +2505,7 @@ k8s中有默认的几个角色
 
 **监控平台架构图**
 
-<img src="">
+<img src="./images/监控架构.png">
 
 ### 4.3 部署pormetheus
 
@@ -2913,7 +2988,7 @@ vi kubeadm-config.yaml
 
 yaml内容如下所示：
 
-```
+```sh
 apiServer:
   certSANs:
     - master1
@@ -2948,7 +3023,7 @@ scheduler: {}
 
 然后我们在 master1 节点执行
 
-```
+```sh
 kubeadm init --config kubeadm-config.yaml
 ```
 
