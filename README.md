@@ -762,7 +762,9 @@ wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
 wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
 
 # 码云地址【个人上传】
-
+wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/etcd/cfssl_linux-amd64
+wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/etcd/cfssljson_linux-amd64
+wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/etcd/cfssl-certinfo_linux-amd64
 
 chmod +x cfssl_linux-amd64 cfssljson_linux-amd64 cfssl-certinfo_linux-amd64
 mv cfssl_linux-amd64 /usr/local/bin/cfssl
@@ -862,7 +864,7 @@ ls server*pem
 wget https://github.com/etcd-io/etcd/releases/download/v3.4.9/etcd-v3.4.9-linux-amd64.tar.gz
 
 # 码云地址【个人上传】
-
+wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/etcd/etcd-v3.4.9-linux-amd64.tar.gz
 ```
 
 安装etcd：
@@ -999,7 +1001,6 @@ systemctl enable etcd
 cd ~/TLS
 # 原地址
 wget https://download.docker.com/linux/static/stable/x86_64/docker-20.10.3.tgz
-# 码云地址【个人上传】
 
 tar -zxvf docker-20.10.3.tgz
 mv docker/ /usr/bin
@@ -1183,7 +1184,7 @@ wget https://storage.googleapis.com/kubernetes-release/release/v1.20.1/kubernete
 wget https://dl.k8s.io/v1.19.0/kubernetes-server-linux-amd64.tar.gz
 
 # 码云地址【个人上传】【推荐】
-
+wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/k8s/kubernetes-server-linux-amd64.tar.gz
 ```
 
 解压二进制包：
@@ -1675,7 +1676,7 @@ systemctl status kube-proxy
 # 原地址
 wget https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
 # 码云地址【个人上传】
-wget 
+wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/k8s/cni-plugins-linux-amd64-v0.8.6.tgz
 ```
 
 安装插件：
@@ -2818,7 +2819,7 @@ netstat -tunlp | grep haproxy
 
 两台master节点的配置均相同，配置中声明了后端代理的两个master节点服务器，指定了haproxy运行的端口为16443等，因此16443端口为集群的入口
 
-```
+```sh
 cat > /etc/haproxy/haproxy.cfg << EOF
 #---------------------------------------------------------------------
 # Global settings
