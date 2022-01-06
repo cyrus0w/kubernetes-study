@@ -35,8 +35,8 @@ kubernetes-study:
 
 ## 前置内容
 
-- Linux | [Linux 入门笔记]()
-- Docker | [Docker 入门笔记]()
+- Linux | [Linux 入门笔记](./others/Linux入门笔记.md) 
+- Docker | [Docker 入门笔记](./others/Linux入门笔记.md)  
 
 
 
@@ -254,17 +254,17 @@ kubeadm join <Master节点的IP和端口 >
 
 #### 2.1.3  准备环境
 
-> 不会配置环境的可以参考 [Linux 入门笔记 | 虚拟机 IP 配置]()
+> 不会配置环境的可以参考 [Linux 入门笔记 | 虚拟机 IP 配置](./others/Linux入门笔记.md)
 
-| 角色      | IP             | 配置  | 操作                                                         |
-| --------- | -------------- | ----- | ------------------------------------------------------------ |
-| k8smaster | 192.168.60.151 | 2C 2G | `init` `docker` `kubelet` `kubeadm` `kubectl` `kubeadm init` `cni` |
-| k8snode1  | 192.168.60.152 | 2C 2G | `init` `docker` `kubelet` `kubeadm` `kubectl` `kubeadm join` |
-| k8snode2  | 192.168.60.153 | 2C 2G | `init` `docker` `kubelet` `kubeadm` `kubectl` `kubeadm join` |
+| 角色       | IP             | 配置  | 操作                                                         |
+| ---------- | -------------- | ----- | ------------------------------------------------------------ |
+| k8smaster1 | 192.168.60.151 | 2C 2G | `init` `docker` `kubelet` `kubeadm` `kubectl` `kubeadm init` `cni` |
+| k8snode1   | 192.168.60.152 | 2C 2G | `init` `docker` `kubelet` `kubeadm` `kubectl` `kubeadm join` |
+| k8snode2   | 192.168.60.153 | 2C 2G | `init` `docker` `kubelet` `kubeadm` `kubectl` `kubeadm join` |
 
 #### 2.1.4  系统初始化
 
-在每台机器上执行下面的命令：
+【在每台机器上】执行下面的命令：
 
 ```sh
 # 关闭防火墙
@@ -273,20 +273,18 @@ systemctl stop firewalld
 systemctl disable firewalld
 
 # 关闭selinux
-# 永久关闭
-sed -i 's/enforcing/disabled/' /etc/selinux/config  
-# 临时关闭
+# 临时关闭【立即生效】告警，不启用，Permissive，查看使用 getenforce 命令
 setenforce 0  
+# 永久关闭【重启生效】
+sed -i 's/enforcing/disabled/' /etc/selinux/config  
 
-查看swap
-free
 # 关闭swap
-# 临时
+# 临时关闭【立即生效】查看使用 free 命令
 swapoff -a 
-# 永久关闭
+# 永久关闭【重启生效】
 sed -ri 's/.*swap.*/#&/' /etc/fstab
 
-# 可以只在master添加hosts
+# 在主机名静态查询表中添加3台主机
 cat >> /etc/hosts << EOF
 192.168.60.151 k8smaster
 192.168.60.152 k8snode1
@@ -298,17 +296,24 @@ cat > /etc/sysctl.d/k8s.conf << EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
-# 生效
+# 使k8s配置生效
 sysctl --system  
 
 # 时间同步
 yum install ntpdate -y
 ntpdate time.windows.com
+
+# 根据规划设置主机名【k8smaster1节点上操作】
+hostnamectl set-hostname ks8master1
+# 根据规划设置主机名【k8snode1节点上操作】
+hostnamectl set-hostname k8snode1
+# 根据规划设置主机名【k8snode2节点操作】
+hostnamectl set-hostname k8snode2
 ```
 
 #### 2.1.5  安装组件
 
-所有节点需要安装以下组件 ，Kubernetes默认CRI（容器运行时）为Docker，因此先安装Docker。
+【所有节点】需要安装以下组件 ，Kubernetes默认CRI（容器运行时）为Docker，因此先安装Docker。
 
 - Docker
 - kubeadm
@@ -317,9 +322,8 @@ ntpdate time.windows.com
 
 **1、安装 Docker**
 
-首先配置一下Docker的阿里yum源：
-
 ```sh
+# 配置一下Docker的yum源【阿里云】
 cat >/etc/yum.repos.d/docker.repo<<EOF
 [docker-ce-edge]
 name=Docker CE Edge - \$basearch
@@ -328,43 +332,29 @@ enabled=1
 gpgcheck=1
 gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
 EOF
-```
 
-然后yum方式安装docker：
-
-```sh
-# yum安装
+# 然后yum方式安装docker
 yum -y install docker-ce
-
 # 查看docker版本
-docker --version  
+docker --version
 
-# 启动docker
-systemctl enable docker
-systemctl start docker
-```
-
-配置docker的镜像源：
-
-```sh
+# 配置docker的镜像源【阿里云】
 cat >> /etc/docker/daemon.json << EOF
 {
   "registry-mirrors": ["https://b9pmyelo.mirror.aliyuncs.com"]
 }
 EOF
+
+# 启动docker
+systemctl enable docker
+systemctl start docker
+systemctl status docker
 ```
 
-然后重启docker：
+**2、安装kubeadm，kubelet和kubectl**
 
 ```sh
-systemctl restart docker
-```
-
-**2、添加 kubernetes 软件源**
-
-配置yum的k8s软件源：
-
-```sh
+# 配置k8s的yum源【阿里云】
 cat > /etc/yum.repos.d/kubernetes.repo << EOF
 [kubernetes]
 name=Kubernetes
@@ -374,32 +364,26 @@ gpgcheck=0
 repo_gpgcheck=0
 gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
 EOF
-```
 
-**3、安装kubeadm，kubelet和kubectl**
-
-由于版本更新频繁，这里指定版本号部署：
-
-```sh
 # 安装kubelet、kubeadm、kubectl，同时指定版本
 yum install -y kubelet-1.18.0 kubeadm-1.18.0 kubectl-1.18.0
-# 设置开机启动
+# 设置开机自启【这里暂时先不启动kubelet】
 systemctl enable kubelet
 ```
 
 #### 2.1.6  集群部署【master节点】
 
-在 192.168.60.151 执行，也就是master节点
+在 `192.168.60.151 ` 上执行【集群初始化命令】，也就是`k8smaster1`节点
 
 ```sh
 kubeadm init --apiserver-advertise-address=192.168.60.151 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.18.0 --service-cidr=10.96.0.0/12  --pod-network-cidr=10.244.0.0/16
 ```
 
-由于默认拉取镜像地址k8s.gcr.io国内无法访问，这里指定阿里云镜像仓库地址，【执行上述命令会比较慢，因为后台其实已经在拉取镜像了】，我们 docker images 命令即可查看已经拉取的镜像。
+> 由于默认拉取镜像地址k8s.gcr.io国内无法访问，这里指定阿里云镜像仓库地址，【执行上述命令会比较慢，因为后台其实已经在拉取镜像了】，我们 docker images 命令即可查看已经拉取的镜像。
 
-部署成功后，提示运行以下命令使用kubectl
+部署成功后，【系统提示】运行以下命令使用kubectl
 
-```
+```sh
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -407,33 +391,33 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 执行完成后，我们使用下面命令，查看我们正在运行的节点
 
-```
+```sh
 kubectl get nodes
 ```
 
 #### 2.1.7  集群部署【node节点】
 
-下面我们需要到 k8snode1 和 k8snode2 服务器，执行下面的代码向集群添加新节点
+下面我们需要到 `k8snode1` 和 `k8snode2` 服务器，执行下面的代码向集群添加新节点
 
 执行在kubeadm init输出的kubeadm join命令：
 
-> 注意，以下的命令是在master初始化完成后，每个人的都不一样！！！需要复制自己生成的
+> 注意，以下的命令是在 k8smaster1 初始化完成后给出的，每个人的都不一样！！！需要复制自己生成的
 
-```
+```sh
 kubeadm join 192.168.60.151:6443 --token 8j6ui9.gyr4i156u30y80xf \
     --discovery-token-ca-cert-hash sha256:eda1380256a62d8733f4bddf926f148e57cf9d1a3a58fb45dd6e80768af5a500
 ```
 
 默认token有效期为24小时，当过期之后，该token就不可用了。这时就需要重新创建token，操作如下：
 
-```
+```sh
 kubeadm token create --print-join-command
 ```
 
-当我们把两个节点都加入进来后，我们就可以去Master节点下 执行下面命令查看情况
+当我们把两个节点都加入进来后，我们就可以去 `k8smaster1` 节点下 执行下面命令查看情况
 
-```
-kubectl get node
+```sh
+kubectl get nodes
 ```
 
 #### 2.1.8  部署CNI网络插件
@@ -446,22 +430,22 @@ wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-
 # 添加
 kubectl apply -f kube-flannel.yml
 # 等一会！
-
+# ......
 # 查看状态 【kube-system是k8s中的最小单元】
 kubectl get pods -n kube-system
 ```
 
 运行后的结果为Ready状态
 
-如果上述操作完成后，还存在某个节点处于NotReady状态，可以在Master将该节点删除
+【提示】如果上述操作完成后，还存在某个节点处于NotReady状态，可以在Master将该节点删除
 
 ```sh
-# master节点将该节点删除
+# 将k8snode1节点删除【在k8smaster1节点上操作】 
 kubectl delete node k8snode1
 
-# 然后到k8snode1节点进行重置
+# 将k8snode1节点进行重置【在k8snode1节点上操作】
 kubeadm reset
-# 重置完后再加入
+# 将k8snode1节点加入集群【在k8snode1节点上操作】
 kubeadm join 192.168.60.151:6443 --token 8j6ui9.gyr4i156u30y80xf     --discovery-token-ca-cert-hash sha256:eda1380256a62d8733f4bddf926f148e57cf9d1a3a58fb45dd6e80768af5a500
 ```
 
@@ -489,7 +473,7 @@ kubectl expose deployment nginx --port=80 --type=NodePort
 kubectl get pod,svc
 ```
 
-能够看到，我们已经成功暴露了 80端口 到 30529上
+我这里，已经成功暴露了 80端口 到 30529上
 
 我们到我们的宿主机浏览器上，访问如下地址
 
@@ -514,34 +498,34 @@ error execution phase preflight: [preflight] Some fatal errors occurred:
 
 **错误二**
 
-我们在给node1节点使用 kubernetes join命令的时候，出现以下错误
+我们在给k8snode1节点使用 kubernetes join命令的时候，出现以下错误
 
 ```
 error execution phase preflight: [preflight] Some fatal errors occurred:
 	[ERROR Swap]: running with swap on is not supported. Please disable swap
 ```
 
-错误原因是我们需要关闭swap
+错误原因是我们需要关闭swap【可能是永久关闭swap时没有重启生效】
 
-```
+```sh
 # 关闭swap
-# 临时
+# 临时关闭【立即生效】
 swapoff -a 
-# 临时
+# 永久关闭【重启生效】
 sed -ri 's/.*swap.*/#&/' /etc/fstab
 ```
 
 **错误三**
 
-在给node1节点使用 kubernetes join命令的时候，出现以下错误
+在给k8snode1节点使用 kubernetes join命令的时候，出现以下错误
 
 ```
 The HTTP call equal to 'curl -sSL http://localhost:10248/healthz' failed with error: Get http://localhost:10248/healthz: dial tcp [::1]:10248: connect: connection refused
 ```
 
-解决方法，首先需要到 master 节点，创建一个文件
+解决方法，首先需要到 k8smaster1 节点，创建一个文件
 
-```
+```sh
 # 创建文件夹
 mkdir /etc/systemd/system/kubelet.service.d
 
@@ -557,26 +541,26 @@ kubeadm reset
 
 然后删除刚刚创建的配置目录
 
-```
+```sh
 rm -rf $HOME/.kube
 ```
 
-然后 在master重新初始化
+然后 在k8smaster1重新初始化
 
-```
-kubeadm init --apiserver-advertise-address=202.193.57.11 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.18.0 --service-cidr=10.96.0.0/12  --pod-network-cidr=10.244.0.0/16
+```sh
+kubeadm init --apiserver-advertise-address=92.168.60.151:6443 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.18.0 --service-cidr=10.96.0.0/12  --pod-network-cidr=10.244.0.0/16
 ```
 
-初始完成后，我们再到 node1节点，执行 kubeadm join命令，加入到master
+初始完成后，我们再到 k8snode1节点，执行 kubeadm join命令，加入到 k8smaster1【下面这条命令是k8smaster1初始化后自动生成的】
 
-```
-kubeadm join 202.193.57.11:6443 --token c7a7ou.z00fzlb01d76r37s \
+```sh
+kubeadm join 192.168.60.151:6443 --token c7a7ou.z00fzlb01d76r37s \
     --discovery-token-ca-cert-hash sha256:9c3f3cc3f726c6ff8bdff14e46b1a856e3b8a4cbbe30cab185f6c5ee453aeea5
 ```
 
 添加完成后，我们使用下面命令，查看节点是否成功添加
 
-```
+```sh
 kubectl get nodes
 ```
 
@@ -584,13 +568,13 @@ kubectl get nodes
 
 我们再执行查看节点的时候， kubectl get nodes 会出现问题
 
-```
+```sh
 Unable to connect to the server: x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes")
 ```
 
 这是因为我们之前创建的配置文件还存在，也就是这些配置
 
-```
+```sh
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -598,13 +582,13 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 我们需要做的就是把配置文件删除，然后重新执行一下
 
-```
+```sh
 rm -rf $HOME/.kube
 ```
 
 然后再次创建一下即可
 
-```
+```sh
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -616,28 +600,28 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 安装的时候，出现以下错误
 
-```
+```sh
 Another app is currently holding the yum lock; waiting for it to exit...
 ```
 
 是因为yum上锁占用，解决方法
 
-```
+```sh
 yum -y install docker-ce
 ```
 
 **错误六**
 
-在使用下面命令，添加node节点到集群上的时候
+在使用下面命令，添加k8snode1节点到集群上的时候
 
-```
-kubeadm join 192.168.177.130:6443 --token jkcz0t.3c40t0bqqz5g8wsb  --discovery-token-ca-cert-hash sha256:bc494eeab6b7bac64c0861da16084504626e5a95ba7ede7b9c2dc7571ca4c9e5
+```sh
+kubeadm join 192.168.60.151:6443 --token jkcz0t.3c40t0bqqz5g8wsb  --discovery-token-ca-cert-hash sha256:bc494eeab6b7bac64c0861da16084504626e5a95ba7ede7b9c2dc7571ca4c9e5
 ```
 
 然后出现了这个错误
 
-```
-[root@k8smaster ~]# kubeadm join 192.168.177.130:6443 --token jkcz0t.3c40t0bqqz5g8wsb     --discovery-token-ca-cert-hash sha256:bc494eeab6b7bac64c0861da16084504626e5a95ba7ede7b9c2dc7571ca4c9e5
+```sh
+[root@k8smaster1 ~]# kubeadm join 192.168.60.151:6443 --token jkcz0t.3c40t0bqqz5g8wsb     --discovery-token-ca-cert-hash sha256:bc494eeab6b7bac64c0861da16084504626e5a95ba7ede7b9c2dc7571ca4c9e5
 W1117 06:55:11.220907   11230 join.go:346] [preflight] WARNING: JoinControlPane.controlPlane settings will be ignored when control-plane flag is not set.
 [preflight] Running pre-flight checks
 	[WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
@@ -654,7 +638,7 @@ To see the stack trace of this error execute with --v=5 or higher
 
 所以我们需要将值修改成1即可
 
-```
+```sh
 echo “1” > /proc/sys/net/ipv4/ip_forward
 ```
 
@@ -682,7 +666,7 @@ echo “1” > /proc/sys/net/ipv4/ip_forward
 在开始之前，部署 Kubernetes 集群机器需要满足以下几个条件：
 
 - 一台或多台机器，操作系统 CentOS7.x-86_x64
-- 硬件配置：2GB或更多RAM，2个CPU或更多CPU，硬盘30GB或更多【注意】【注意】【注意】【**master需要两核**】
+- 硬件配置：2GB或更多RAM，2个CPU或更多CPU，硬盘20GB或更多【注意】【注意】【注意】【**master需要两核**】
 - 可以访问外网，需要拉取镜像，如果服务器不能上网，需要提前下载镜像并导入节点
 - 禁止swap分区
 
@@ -690,11 +674,11 @@ echo “1” > /proc/sys/net/ipv4/ip_forward
 
 > 不会配置环境的可以参考 [Linux 入门笔记 | 虚拟机 IP 配置]()
 
-| 角色      | IP             | 配置  | 操作                                                         |
-| --------- | -------------- | ----- | ------------------------------------------------------------ |
-| k8smaster | 192.168.60.151 | 2C 2G | `init` `etcd` `docker` `kube-apiserver` `kube-controller-manager` `kube-scheduler` `cni` |
-| k8snode1  | 192.168.60.152 | 2C 2G | `init` `etcd`  `docker` `kubelet` `kube-proxy`               |
-| k8snode2  | 192.168.60.153 | 2C 2G | `init`  `etcd` `docker` `kubelet` `kube-proxy`               |
+| 角色       | IP             | 配置  | 操作                                                         |
+| ---------- | -------------- | ----- | ------------------------------------------------------------ |
+| k8smaster1 | 192.168.60.151 | 2C 2G | `init` `etcd` `docker` `kube-apiserver` `kube-controller-manager` `kube-scheduler` `cni` |
+| k8snode1   | 192.168.60.152 | 2C 2G | `init` `etcd`  `docker` `kubelet` `kube-proxy`               |
+| k8snode2   | 192.168.60.153 | 2C 2G | `init`  `etcd` `docker` `kubelet` `kube-proxy`               |
 
 #### 2.2.4  系统初始化
 
@@ -707,20 +691,18 @@ systemctl stop firewalld
 systemctl disable firewalld
 
 # 关闭selinux
-# 永久关闭
-sed -i 's/enforcing/disabled/' /etc/selinux/config  
-# 临时关闭
+# 临时关闭【立即生效】告警，不启用，Permissive，查看使用 getenforce 命令
 setenforce 0  
+# 永久关闭【重启生效】
+sed -i 's/enforcing/disabled/' /etc/selinux/config  
 
-查看swap
-free
 # 关闭swap
-# 临时
+# 临时关闭【立即生效】查看使用 free 命令
 swapoff -a 
-# 永久关闭
+# 永久关闭【重启生效】
 sed -ri 's/.*swap.*/#&/' /etc/fstab
 
-# 可以只在master添加hosts
+# 在主机名静态查询表中添加3台主机
 cat >> /etc/hosts << EOF
 192.168.60.151 k8smaster
 192.168.60.152 k8snode1
@@ -732,19 +714,26 @@ cat > /etc/sysctl.d/k8s.conf << EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
-# 生效
+# 使k8s配置生效
 sysctl --system  
 
 # 时间同步
 yum install ntpdate -y
 ntpdate time.windows.com
+
+# 根据规划设置主机名【k8smaster1节点上操作】
+hostnamectl set-hostname ks8master1
+# 根据规划设置主机名【k8snode1节点上操作】
+hostnamectl set-hostname k8snode1
+# 根据规划设置主机名【k8snode2节点操作】
+hostnamectl set-hostname k8snode2
 ```
 
 #### 2.2.5 部署etcd集群
 
 Etcd是一个分布式键值存储系统，Kubernetes使用Etcd进行数据存储，所以先准备一个Etcd数据库，为了解决Etcd单点故障，应采用集群方式部署，这里使用3台组建集群，可容忍一台机器故障，当然也可以使用5台组件集群，可以容忍2台机器故障。
 
-**1、为etcd和apiserver自签证书**【master节点操作】
+**1、为etcd和apiserver自签证书**【k8smaster1节点操作】
 
 创建工作目录：
 
@@ -756,7 +745,7 @@ cd TLS/etcd/
 准备cfssl证书生成工具：
 
 ```sh
-# 原地址【下载太慢】/ 建议迅雷下载
+# 原地址【下载太慢】 建议迅雷下载
 wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
 wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
 wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
@@ -772,9 +761,11 @@ mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
 mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
 ```
 
-自签CA：
+【使用自签CA生成 etcd 证书】
 
-```json
+【① 自签CA】：
+
+```sh
 cat > ca-config.json<<EOF
 {
     "signing": {
@@ -814,18 +805,20 @@ cat > ca-csr.json<<EOF
 EOF
 ```
 
-生成etcd证书：
+【② 签发etcd证书】：
 
-```
+```sh
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
 ls *pem
 ```
 
-使用自签CA签发Etcd HTTPS证书：
+【使用自签CA签发Etcd HTTPS证书】：
 
-创建证书申请文件：（文件 hosts 字段中 IP 为所有 etcd 节点的集群内部通信 IP，一个都不能少！为了 方便后期扩容可以多写几个预留的 IP）
+【① 自签CA】
 
-```json
+> 创建证书申请文件：（文件 hosts 字段中 IP 为所有 etcd 节点的集群内部通信 IP，一个都不能少！为了 方便后期扩容可以多写几个预留的 IP）
+
+```sh
 cat > server-csr.json << EOF
 {
     "CN": "etcd",
@@ -849,13 +842,14 @@ cat > server-csr.json << EOF
 EOF
 ```
 
+【② 签发 etcd https 证书】
+
 ```sh
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=www server-csr.json | cfssljson -bare server
-
 ls server*pem
 ```
 
-**2、部署etcd**【master节点操作】
+**2、部署etcd**【k8smaster1节点操作】
 
 从GitHub下载二进制文件：
 
@@ -932,21 +926,23 @@ WantedBy=multi-user.target
 EOF
 ```
 
-【master配置完毕！】
+【k8smaster1配置完毕！】
 
-**3、转发etcd到node节点**【master节点操作】
+**3、转发etcd到node节点**【k8smaster1节点上操作】【需要输入密码，建议密码设置简单一点】
 
 ```sh
+###### 转发到 k8snode1 ######
 scp -r /opt/etcd/ root@192.168.60.152:/opt/
 scp -r /usr/lib/systemd/system/etcd.service root@192.168.60.152:/usr/lib/systemd/system/
+###### 转发到 k8snode2 ######
 scp -r /opt/etcd/ root@192.168.60.153:/opt/
 scp -r /usr/lib/systemd/system/etcd.service root@192.168.60.153:/usr/lib/systemd/system/
 ```
 
-**4、修改node节点上etcd的配置文件：IP 和名字**【node节点操作】
+**4、修改node节点上etcd的配置文件：IP 和名字**【k8snode1 和 k8snode2 节点上操作】
 
 ```sh
-##### k8sndoe1 #####
+##### k8sndoe1上操作 #####
 cat > /opt/etcd/cfg/etcd.conf << EOF
 #[Member]
 ETCD_NAME="etcd-2"
@@ -961,7 +957,7 @@ ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
 ETCD_INITIAL_CLUSTER_STATE="new"
 EOF
 
-##### k8sndoe2 #####
+##### k8sndoe2上操作 #####
 cat > /opt/etcd/cfg/etcd.conf << EOF
 #[Member]
 ETCD_NAME="etcd-3"
@@ -977,7 +973,7 @@ ETCD_INITIAL_CLUSTER_STATE="new"
 EOF
 ```
 
-启动并设置开机启动：
+启动并设置开机启动：【k8snode1 和 k8snode2 均需启动】
 
 ```sh
 systemctl daemon-reload
@@ -995,13 +991,9 @@ systemctl enable etcd
 
 在所有节点操作。这里采用二进制安装，用 yum 安装也一样 （多台节点安装可以采用键盘工具）
 
-下载docker安装包：
-
 ```sh
 cd ~/TLS
-# 原地址
 wget https://download.docker.com/linux/static/stable/x86_64/docker-20.10.3.tgz
-
 tar -zxvf docker-20.10.3.tgz
 mv docker/ /usr/bin
 ```
@@ -1050,17 +1042,17 @@ EOF
 systemctl daemon-reload
 systemctl start docker
 systemctl enable docker
-docker -v
+systemctl status docker
 ```
 
-【master节点安装docker完毕！转发到node节点】
+【k8smaster1节点安装docker完毕！转发到 k8snode1 和 k8snode2 节点】【k8smaster1节点上操作】
 
 ```sh
-##### k8snode1 #####
+##### 转发到 k8snode1 #####
 scp -r /usr/bin/docker/ root@192.168.60.152:/usr/bin/
 scp -r /usr/lib/systemd/system/docker.service root@192.168.60.152:/usr/lib/systemd/system/
 scp -r /etc/docker/ root@192.168.60.152:/etc/
-##### k8snode2 #####
+##### 转发到 k8snode2 #####
 scp -r /usr/bin/docker/ root@192.168.60.153:/usr/bin/
 scp -r /usr/lib/systemd/system/docker.service root@192.168.60.153:/usr/lib/systemd/system/
 scp -r /etc/docker/ root@192.168.60.153:/etc/
@@ -1074,7 +1066,9 @@ scp -r /etc/docker/ root@192.168.60.153:/etc/
 
 **1、安装kube-apiserver**
 
-生成kube-apiserver证书：自签证书颁发机构CA
+【生成kube-apiserver证书】
+
+【① 自签证书颁发机构CA】：
 
 ```sh
 cd ~/TLS/k8s
@@ -1124,14 +1118,16 @@ cat > ca-csr.json << EOF
 EOF
 ```
 
-生成证书：
+【② 生成kube-apiserver证书】：
 
 ```sh
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
 ls *pem
 ```
 
-使用自签 CA 签发 kube-apiserver HTTPS 证书 创建证书申请文件：
+【使用自签 CA 签发 kube-apiserver HTTPS 证书】
+
+【① 创建证书申请文件】：
 
 ```sh
 cat > server-csr.json << EOF
@@ -1166,15 +1162,16 @@ cat > server-csr.json << EOF
 EOF
 ```
 
-生成证书：
+【② 生成kube-apiserver https证书】：
 
 ```sh
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes server-csr.json | cfssljson -bare server
-
 ls server*pem
 ```
 
-下载二进制文件：
+【安装kube-apiserver】
+
+下载二进制包：
 
 ```sh
 # 下载地址：https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.20.md
@@ -1197,7 +1194,7 @@ cp kube-apiserver kube-scheduler kube-controller-manager /opt/kubernetes/bin
 cp kubectl /usr/bin/
 ```
 
-部署kube-apiserver：
+生成kube-apiserver配置文件：
 
 ```sh
 cat > /opt/kubernetes/cfg/kube-apiserver.conf << EOF
@@ -1324,7 +1321,6 @@ KUBE_CONTROLLER_MANAGER_OPTS="--logtostderr=false \\
 --experimental-cluster-signing-duration=87600h0m0s"
 EOF
 
-
 # –master：通过本地非安全本地端口 8080 连接 apiserver。
 # –leader-elect：当该组件启动多个时，自动选举（HA）
 # –cluster-signing-cert-file/–cluster-signing-key-file：自动为 kubelet 颁发证书的 CA，与 apiserver 保持一致
@@ -1411,7 +1407,7 @@ kubectl get cs
 **1、安装kubelet**
 
 ```sh
-##### k8snode1 #####
+##### k8snode1节点上操作 #####
 mkdir -p /opt/kubernetes/{bin,cfg,ssl,logs}
 ```
 
@@ -1473,13 +1469,17 @@ maxPods: 110
 EOF
 ```
 
-将master节点的bin文件和证书拷贝到node节点上【**master节点操作**】：
+将k8smaster1节点的bin文件和证书拷贝到k8snode1和k8snode2节点上【k8smaster1节点操作】：
 
 ```sh
 cd ~/TLS/k8s/kubernetes/server/bin
+
+##### 转发到 k8snode1 #####
 scp -r {kubelet,kube-proxy} root@192.168.60.152:/opt/kubernetes/bin/
 scp -r /usr/bin/kubectl root@192.168.60.152:/usr/bin/
 scp -r /opt/kubernetes/ssl root@192.168.60.152:/opt/kubernetes
+
+##### 转发到 k8snode2 #####
 scp -r /opt/kubernetes/ssl root@192.168.60.153:/opt/kubernetes
 ```
 
@@ -1538,14 +1538,15 @@ systemctl enable kubelet
 systemctl status kubelet
 ```
 
-批准kubelet证书申请并加入集群【**master节点操作**】：
+批准kubelet证书申请并加入集群【k8smaster1节点操作】：
 
 ```sh
 # 查看kubelet证书请求
 kubectl get csr
 
-NAME                                                   AGE    SIGNERNAME                                    REQUESTOR           CONDITION
-node-csr-uCEGPOIiDdlLODKts8J658HrFq9CZ--K6M4G7bjhk8A   6m3s   kubernetes.io/kube-apiserver-client-kubelet   kubelet-bootstrap   Pending
+###    输出结果
+###    NAME                                                   AGE    SIGNERNAME                                    REQUESTOR           CONDITION
+###    node-csr-uCEGPOIiDdlLODKts8J658HrFq9CZ--K6M4G7bjhk8A   6m3s   kubernetes.io/kube-apiserver-client-kubelet   kubelet-bootstrap   Pending
 
 # 批准申请
 kubectl certificate approve node-csr-uCEGPOIiDdlLODKts8J658HrFq9CZ--K6M4G7bjhk8A
@@ -1580,7 +1581,7 @@ clusterCIDR: 10.0.0.0/24
 EOF
 ```
 
-生成kube-proxy.kubeconfig文件【**master生成再传到node**】：
+生成kube-proxy.kubeconfig文件【**k8smaster1生成再传到k8snode1和k8snode2**】：
 
 ```sh
 # 切换工作目录
@@ -1637,8 +1638,9 @@ kubectl config set-context default \
   --kubeconfig=kube-proxy.kubeconfig
 kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
 
-# 转发到node节点
+##### 转发到 k8snode1 #####
 scp -r kube-proxy.kubeconfig root@192.168.60.152:/opt/kubernetes/cfg/
+##### 转发到 k8snode2 #####
 scp -r kube-proxy.kubeconfig root@192.168.60.153:/opt/kubernetes/cfg/
 ```
 
@@ -1675,7 +1677,7 @@ systemctl status kube-proxy
 ```sh
 # 原地址
 wget https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
-# 码云地址【个人上传】
+# 码云地址【个人上传】【推荐】【速度较快】
 wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/k8s/cni-plugins-linux-amd64-v0.8.6.tgz
 ```
 
@@ -1686,7 +1688,7 @@ mkdir -p /opt/cni/bin
 tar -zxvf cni-plugins-linux-amd64-v0.8.6.tgz -C /opt/cni/bin
 ```
 
-【master节点操作】：
+【k8smaster1节点操作】：
 
 ```sh
 wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
