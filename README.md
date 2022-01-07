@@ -276,7 +276,7 @@ systemctl disable firewalld
 # 临时关闭【立即生效】告警，不启用，Permissive，查看使用 getenforce 命令
 setenforce 0  
 # 永久关闭【重启生效】
-sed -i 's/enforcing/disabled/' /etc/selinux/config  
+sed -i 's/SELINUX=enforcing/\SELINUX=disabled/' /etc/selinux/config  
 
 # 关闭swap
 # 临时关闭【立即生效】查看使用 free 命令
@@ -694,7 +694,7 @@ systemctl disable firewalld
 # 临时关闭【立即生效】告警，不启用，Permissive，查看使用 getenforce 命令
 setenforce 0  
 # 永久关闭【重启生效】
-sed -i 's/enforcing/disabled/' /etc/selinux/config  
+sed -i 's/SELINUX=enforcing/\SELINUX=disabled/' /etc/selinux/config  
 
 # 关闭swap
 # 临时关闭【立即生效】查看使用 free 命令
@@ -3417,30 +3417,22 @@ kubectl get pod,svc -n kube-system | grep grafana
 ```sh
 # 关闭防火墙
 systemctl stop firewalld
+# 禁用firewalld服务
 systemctl disable firewalld
 
 # 关闭selinux
-# 永久关闭
-sed -i 's/enforcing/disabled/' /etc/selinux/config  
-# 临时关闭
+# 临时关闭【立即生效】告警，不启用，Permissive，查看使用 getenforce 命令
 setenforce 0  
+# 永久关闭【重启生效】
+sed -i 's/SELINUX=enforcing/\SELINUX=disabled/' /etc/selinux/config  
 
 # 关闭swap
-# 临时
+# 临时关闭【立即生效】查看使用 free 命令
 swapoff -a 
-# 永久关闭
+# 永久关闭【重启生效】
 sed -ri 's/.*swap.*/#&/' /etc/fstab
 
-# 根据规划设置主机名【k8sLoadBalancer节点上操作】
-hostnamectl set-hostname k8sLoadBalancer
-# 根据规划设置主机名【k8smaster1节点上操作】
-hostnamectl set-hostname ks8master1
-# 根据规划设置主机名【k8smaster2节点上操作】
-hostnamectl set-hostname k8smaster2
-# 根据规划设置主机名【k8snode1节点操作】
-hostnamectl set-hostname k8snode1
-
-# 添加hosts
+# 在主机名静态查询表中添加4台主机
 cat >> /etc/hosts << EOF
 192.168.60.150 k8sLoadBalancer
 192.168.60.151 k8smaster1
@@ -3460,6 +3452,15 @@ sysctl --system
 # 时间同步
 yum install ntpdate -y
 ntpdate time.windows.com
+
+# 根据规划设置主机名【k8sLoadBalancer节点上操作】
+hostnamectl set-hostname k8sLoadBalancer
+# 根据规划设置主机名【k8smaster1节点上操作】
+hostnamectl set-hostname ks8master1
+# 根据规划设置主机名【k8smaster2节点上操作】
+hostnamectl set-hostname k8smaster2
+# 根据规划设置主机名【k8snode1节点操作】
+hostnamectl set-hostname k8snode1
 ```
 
 #### 5.3.5 安装docker、kubelet、kubeadm、kubectl
