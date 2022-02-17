@@ -33,8 +33,8 @@ kubernetes-study
 
 ## 前置内容
 
-- Linux | [Linux 入门笔记](others/Linux入门笔记/README.md) 
-- Docker | [Docker 入门笔记](others/Docker入门笔记/README.md)  
+- Linux | [Linux 入门笔记](Linux.md) 
+- Docker | [Docker 入门笔记](Docker.md)  
 
 
 
