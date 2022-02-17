@@ -25,17 +25,17 @@ yum -y install docker-ce
 # 查看版本
 docker --version
 
+# 启动
+systemctl start docker
+systemctl enable docker
+systemctl status docker
+
 # 配置docker镜像源【阿里云】
 cat >> /etc/docker/daemon.json << EOF
 {
   "registry-mirrors": ["https://b9pmyelo.mirror.aliyuncs.com"]
 }
 EOF
-
-# 启动
-systemctl start docker
-systemctl enable docker
-systemctl status docker
 
 
 ### dokcer 卸载 ###
@@ -168,57 +168,18 @@ docker rm -f <容器 ID>
 
 按照提示信息创建属于自己的镜像仓库。
 
+### 3.5 Docker Network
+
+我们使用docker run创建Docker容器时，可以用--net选项指定容器的网络模式，Docker有以下4种网络模式：
+
+- bridge模式，使用--net=bridge指定，**默认**设置
+- host模式，使用--net=host指定，容器内部网络空间共享宿主机空间，效果类似于直接在宿主机上启动一个进程，端口信息和宿主机共用
+- container模式，使用--net=container:NAME_or_ID指定，指定容器与特定容器共享网络命名空间
+- none模式，使用--net=none指定，网络模式为空，即保留网络命名空间，但是不做任何网络相关的配置（网卡、IP、路由等）
+
 
 
 ## 4 Dokcerfile
-
-lnmp
-
-```dockerfile
-FROM nginx
-RUN 
-WORKDIR /data/lnmp/nginx
-EXPOSE 80
-CMD
-
-FROM php
-RUN
-WORKDIR /data/lnmp/php
-EXPOSE 9000
-CMD
-
-```
-
-
-
-```sh
-#/bin/bash
-function mysql() {
-	docker run --name mysql-lnmp --restart=always --net lnmp -p 3306:3306 \
-	-v /data/mysql/data:/var/lib/mysql \
-	-v /data/mysql/conf:/etc/mysql/conf.d/ \
-	-v /data/mysql/logs:logs \
-	-e MYSQL_ROOT_PASSWORD=123456
-	-d mysql --character-set-server=utf8
-}
-
-function nginx() {
-	docker run --name nginx-lnmp --restart=always --net lnmp -p 80:80 \
-	-v /data/nginx/html:/data/nginx/html \
-	-v /data/nginx/logs:/data/nginx/logs \
-	-d nginx 
-}
-
-function php() {
-	docker run --name php-lnmp --restart=always --net lnmp -p 9000:9000 \
-	-v /data/php/log:/data/php/log \
-	-d php
-}
-
-$1
-```
-
-
 
 ### 4.1 Docker 命令
 
@@ -275,5 +236,145 @@ docker import mynginx_v1.tar mynginx :v1
 docker info
 docker version
 docker -v
+```
+
+
+
+### 4.2 Dockerfile 实例（lnmp）
+
+lnmp
+
+```dockerfile
+FROM nginx
+RUN 
+WORKDIR /data/lnmp/nginx
+EXPOSE 80
+CMD
+
+FROM php
+RUN
+WORKDIR /data/lnmp/php
+EXPOSE 9000
+CMD
+```
+
+
+
+```sh
+#/bin/bash
+function mysql() {
+	docker run --name mysql-lnmp --restart=always --net lnmp -p 3306:3306 \
+	-v /data/mysql/data:/var/lib/mysql \
+	-v /data/mysql/conf:/etc/mysql/conf.d/ \
+	-v /data/mysql/logs:logs \
+	-e MYSQL_ROOT_PASSWORD=123456
+	-d mysql --character-set-server=utf8
+}
+
+function nginx() {
+	docker run --name nginx-lnmp --restart=always --net lnmp -p 80:80 \
+	-v /data/nginx/html:/data/nginx/html \
+	-v /data/nginx/logs:/data/nginx/logs \
+	-d nginx 
+}
+
+function php() {
+	docker run --name php-lnmp --restart=always --net lnmp -p 9000:9000 \
+	-v /data/php/log:/data/php/log \
+	-d php
+}
+
+$1
+```
+
+
+
+### 4.3 Dockerfile 实例（Django）
+
+【Django项目介绍】
+
+- 项目地址：https://gitee.com/agagin/python-demo.git （`./python-demo-master.zip` 含 `dockerfile`）
+- Python3 + Django + uwsgi + nginx + mysql
+- 内部服务端口 8002
+
+【构建命令】
+
+```sh
+docker build . -t ImageName:ImageTag -f Dockerfile
+```
+
+【Dockerfile】
+
+```dockerfile
+# dockerfiles/myblog/Dockerfile
+# version 1.0
+
+# Base images 基础镜像
+FROM centos:centos7.5.1804
+
+# MAINTAINER 维护者信息
+LABEL maintainer="123456@qq.com"
+
+# ENV 设置环境变量
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+
+# RUN 执行以下命令
+RUN curl -so /etc/yum.repos.d/centos-7.repo http://mirrors.aliyun.com/repo/Centos-7.repo && rpm -ivh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
+RUN yum install -y python36 python3-devel gcc pcre-devel zlib-devel make net-tools nginx
+
+# 工作目录
+WORKDIR /opt/myblog
+
+# 拷贝文件至工作目录
+COPY . .
+
+# 拷贝nginx配置文件
+COPY myblog.conf /etc/nginx
+
+# 安装依赖的插件
+RUN pip3 install -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com -r requirements.txt
+
+RUN chmod +x run.sh && rm -rf ~/.cache/pip
+
+# EXPOSE 映射端口
+EXPOSE 8002
+
+# 容器启动时执行命令
+CMD ["./run.sh"]
+```
+
+执行构建：
+
+```sh
+docker build . -t myblog:v1 -f Dockerfile
+```
+
+创建网络：（若不指定网络，需要进入mysql容器中，通过ifconfig命令查看mysql容器ip）
+
+```sh
+docker network create --subnet=172.18.0.0/16 mynet
+```
+
+运行mysql：
+
+```sh
+docker run -d -p 3306:3306 --name mysql -v /opt/mysql:/var/lib/mysql --net mynet --ip 172.18.0.2 -e MYSQL_DATABASE=myblog -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+```
+
+启动应用：
+
+```sh
+docker run -d -p 8002:8002 --name myblog --net mynet --ip 172.18.0.3 -e MYSQL_HOST=172.18.0.2 -e MYSQL_USER=root -e MYSQL_PASSWD=123456 myblog:v1
+```
+
+数据迁移：
+
+```sh
+docker exec -it myblog bash
+
+python3 manage.py makemigrations
+python3 manage.py migrate
+python3 manage.py createsuperuser
 ```
 

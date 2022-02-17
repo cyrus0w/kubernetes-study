@@ -353,7 +353,9 @@ CentOS自带官方yum源下载速度较慢，也优化一下。
 
 ```sh
 # 安装常用组件
-yum install -y vim net-tools wget screen lsof tcpdump nc mtr openssl-devel bash-completion lrzsz nmap telnet tree ntpdate iptables-services mailx
+yum install -y vim net-tools wget screen lsof tcpdump nc mtr openssl-devel bash-completion lrzsz nmap telnet tree ntpdate iptables-services mailx zi
+# 安装编译常用组件
+yum install -y make gcc gcc-c++
 
 # 配置epel
 mv /etc/yum.repos.d/epel.repo /etc/yum.repos.d/epel.repo.bak
@@ -388,8 +390,11 @@ cat /etc/locale.conf       #查看配置文件
 ulimit -n
 ##  1024
 # 【重启生效】
-echo "*      soft nofile       65536" >> /etc/security/limits.conf
-echo "*      hard nofile       65536" >> /etc/security/limits.conf
+cat >> /etc/security/limits.conf << EOF
+*                soft    nofile          65536
+*                hard    nofile          65536
+EOF
+ulimit -n 65536
 
 # 时间同步
 yum install -y ntpdate
@@ -400,7 +405,19 @@ mv /etc/vimrc /etc/vimrc.bak
 curl https://raw.githubusercontent.com/wklken/vim-for-server/master/vimrc > ~/.vimrc
 ```
 
-#### 2.1.5 虚拟机安装 UBuntu
+#### 2.1.5 虚拟机内网穿透
+
+NAT 穿透，端口映射
+
+（1）虚拟机网络配置中 【NAT网络】添加【端口转发】
+
+<img src="./images/nat.png">
+
+（2）本地机器上，【控制面板】中的【Windows Defender 防火墙】中的【高级设置】，自定义【入站规则】
+
+
+
+#### 2.1.6 虚拟机安装 UBuntu
 
 [Ubuntu VMs on demand for any workstation](Ubuntu VMs on demand for any workstation)
 

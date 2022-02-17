@@ -1,9 +1,5 @@
-[README]
-
-
-
-```sh
-kubernetes-study:
+```text
+kubernetes-study
 | -- images
 | -- TLS  # 以二进制包方式安装k8s所需软件
      | -- etcd
@@ -20,12 +16,14 @@ kubernetes-study:
 
 
 
-- 学习时长：1 个月
-  - 第零周：Linux & Docker 
-  - 第一周：从零搭建 Kubernetes 集群
-  - 第二周：Kubernetes 核心概念 & 搭建集群监控平台系统
-  - 第三周：从零搭建高可用 Kubernetess 集群
-  - 第四周：在集群环境中部署项目
+```text
+学习时长：1 个月
+- 第零周：Linux & Docker 
+- 第一周：从零搭建 Kubernetes 集群
+- 第二周：Kubernetes 核心概念 & 搭建集群监控平台系统
+- 第三周：从零搭建高可用 Kubernetess 集群
+- 第四周：在集群环境中部署项目
+```
 
 
 
@@ -35,8 +33,8 @@ kubernetes-study:
 
 ## 前置内容
 
-- Linux | [Linux 入门笔记](./others/Linux入门笔记.md) 
-- Docker | [Docker 入门笔记](./others/Linux入门笔记.md)  
+- Linux | [Linux 入门笔记](./others/Linux入门笔记/README.md) 
+- Docker | [Docker 入门笔记](./others/Docker入门笔记/README.md)  
 
 
 
@@ -3376,8 +3374,6 @@ kubectl get pod,svc -n kube-system | grep grafana
 - manager
 - scheduler
 
-<img src="">
-
 ### 5.3 高可用集群搭建
 
 > 我们采用2个master节点，一个node节点来搭建高可用集群。
@@ -3990,4 +3986,6 @@ service/nginx        NodePort    10.109.174.226   <none>        80:32594/TCP   8
 - 运维【监控、升级】
 
 ### 6.3 k8s 部署Java项目
+
+待更新......
 
