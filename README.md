@@ -252,7 +252,7 @@ kubeadm join <Master节点的IP和端口 >
 
 #### 2.1.3  准备环境
 
-> 不会配置环境的可以参考 [Linux 入门笔记 | 虚拟机 IP 配置](./others/Linux入门笔记.md)
+> 不会配置环境的可以参考 [Linux 入门笔记 | 虚拟机网络配置](Linux.md)
 
 | 角色       | IP             | 配置  | 操作                                                         |
 | ---------- | -------------- | ----- | ------------------------------------------------------------ |
@@ -3987,5 +3987,142 @@ service/nginx        NodePort    10.109.174.226   <none>        80:32594/TCP   8
 
 ### 6.3 k8s 部署Java项目
 
-待更新......
+#### 6.3.1 制作Jar包
+
+> 这里已经制作好了一个jar包，直接下载即可
+
+```javaproject
+javaproject/
+└── demojenkins
+    ├── demojenkins.iml
+    ├── Dockerfile
+    ├── HELP.md
+    ├── mvnw
+    ├── mvnw.cmd
+    ├── pom.xml
+    ├── src
+    │   ├── main
+    │   └── test
+    ## 使用 java 和 Maven 进行打包
+    ## 使用 java （springboot）进行打包
+    └── target	# jar包
+        ├── classes
+        ├── generated-sources
+        ├── generated-test-sources
+        ├── maven-archiver
+        ├── maven-status
+        ├── surefire-reports
+        ├── demojenkins.jar  ## jar包
+
+```
+
+
+
+#### 6.3.2 制作镜像
+
+> 这里已经写好了Dockerfile
+
+```dockerfile
+FROM openjdk:8-jdk-alpine
+VOLUME /tmp
+ADD ./target/demojenkins.jar demojenkins.jar
+ENTRYPOINT ["java","-jar","/demojenkins.jar", "&"]
+```
+
+打包镜像：
+
+```sh
+cd javaproject/demojenkins/
+docker build -t java-demo-01:latest .
+```
+
+测试镜像：
+
+```sh
+docker run -d -p 8111:8111 java-demo-01:latest -t 
+```
+
+访问：`ip:8111/user`
+
+<img src="images/javademo.png">
+
+上传到镜像仓库：(本地仓库)
+
+```sh
+## 搭建私人仓库
+mkdir -p /data/myregistry
+docker pull registry:latest
+docker run -d -p 5000:5000 --name my_registry --restart=always -v /data/myregistry:/var/lib/registry registry:latest
+
+## 更改docker配置文件（在需要连接到私有仓库的机器上全部都执行一遍）
+## 在 k8smaster k8snode1 k8snode2 上均执行一遍
+cat > /etc/docker/daemon.json << EOF
+{
+  "registry-mirrors": ["https://b9pmyelo.mirror.aliyuncs.com"],
+  "insecure-registries": ["192.168.60.151:5000"]
+}
+EOF
+## 重启docker，重启registry（如果停止了的话）
+systemctl restart docker  # 3台机器上执行
+docker start my_registry  # 主节点上执行（因为私人仓库在主节点上）
+```
+
+访问：`ip:5000/v2/_catalog`查看本地仓库镜像
+
+<img src="images/dockerregistry.png">
+
+测试本地私有仓库：
+
+```sh
+docker tag java-demo-01 192.168.60.151:5000/test/java-demo-01:v1
+docker push 192.168.60.151:5000/test/java-demo-01:v1
+```
+
+访问：`ip:5000/v2/_catalog`查看本地仓库镜像
+
+<img src="images/javadocker2.png">
+
+在node节点上测试：
+
+```sh
+docker pull 192.168.60.151:5000/test/java-demo-01:v1
+```
+
+
+
+#### 6.3.4 部署项目
+
+```sh
+kubectl create deployment java01 --image=192.168.60.151:5000/test/java-demo-01:v1 --dry-run -o yaml > java01.yaml
+kubectl create -f java01.yaml
+kubectl get pod -o wide
+kubectl expose deployment java01 --port=8111 --target-port=8111 --type=NodePort
+
+## 查看暴露的端口
+[root@k8smaster test]# kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+java01       NodePort    10.109.195.123   <none>        8111:31954/TCP   15s
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          6d
+
+```
+
+浏览器访问：`ip:`31954
+
+<img src="images/k8sjava.png">
+
+
+
+其实不一定非要部署jar包
+
+部署其他服务也是一样的，比如部署nginx，将index.html换掉。（学会这个，其他的都会了）
+
+总结一下要点：
+
+- 制作项目的docker镜像
+- 将镜像上传到docker仓库
+- 使用k8s部署项目
+
+
+
+完结.......
 
