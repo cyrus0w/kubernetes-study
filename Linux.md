@@ -36,14 +36,7 @@
 
 #### 2.1.1 安装 VMware Workstation Pro
 
--  [官方下载地址](https://www.vmware.com/cn/products/workstation-pro/workstation-pro-evaluation.html) 【试用30天】
-
-```sh
-########## 激活码 ############
-ZF3R0-FHED2-M80TY-8QYGC-NPKYF
-YF390-0HF8P-M81RQ-2DXQE-M2UT6
-ZF71R-DMX85-08DQY-8YMNC-PPHV8
-```
+-  [官方下载地址](https://www.vmware.com/cn/products/workstation-pro/workstation-pro-evaluation.html) 【试用30天】 【激活码百度即可】
 
 #### 2.1.2 虚拟机网络配置
 
