@@ -1,6 +1,16 @@
-```text
+# Kubernetes 入门笔记
+
+
+
+```sh
 kubernetes-study
+| -- docs # 文档
+	 | -- Docker.md
+	 | -- Linux.md
 | -- images
+| -- package # 代码包
+	 | -- javaproject.zip
+	 | -- python-demo.zip
 | -- TLS  # 以二进制包方式安装 k8s 所需软件
      | -- etcd
           | -- cfssl_linux-amd64
@@ -10,44 +20,17 @@ kubernetes-study
      | -- k8s
           | -- kube-flannel.yml
           | -- cni-plugins-linux-amd64-v0.8.6.tgz
-          | -- kubernetes-server-linux-amd64.tar.gz
-| -- javaproject.zip
-| -- python-demo.zip  
-| -- Linux.md
-| -- Docker.md
-| -- README.md
+| -- README.md		# k8s 学习笔记文档
+| -- _coverpage.md	# 网页封面文件
+| -- index.html		# 网页样式文件
 ```
 
-```mermaid
-gantt
-  dateFormat  YYYY-MM-DD
-  title     k8s 学习进度
-  excludes   weekends
-  
-  section 提前掌握 
-  Linux 基础              :done, 2021-10-01, 1w 
-  Docker 基础             :done, 2021-10-01, 1w
-  
-  section 重点学习
-  搭建 k8s 学习环境       :crit, 2021-10-08, 1w
-
-  section 看看就好
-  k8s 概念与监控系统      :, 2021-10-15, 1w
-
-  section 学会再说 
-  搭建 k8s 高可用集群     :, 2021-10-22, 1w 
-
-  section 重点掌握 
-  k8s 集群中部署项目      :crit, 2021-10-29, 1w
-
-```
-
-# Kubernetes 入门笔记
+![image-20220504095232033](images/image-20220504095232033.png)
 
 ## 前置内容
 
-- Linux | [Linux 入门笔记](Linux.md) 
-- Docker | [Docker 入门笔记](Docker.md)  
+- Linux | [Linux 入门笔记](docs/Linux.md) 
+- Docker | [Docker 入门笔记](docs/Docker.md)  
 
 ## 目录
 
@@ -1184,9 +1167,6 @@ ls server*pem
 # 这里提供几个下载地址
 wget https://storage.googleapis.com/kubernetes-release/release/v1.20.1/kubernetes-server-linux-amd64.tar.gz
 wget https://dl.k8s.io/v1.19.0/kubernetes-server-linux-amd64.tar.gz
-
-# 码云地址【个人上传】【推荐】
-wget https://gitee.com/bbigsun/kubernetes-study/raw/master/TLS/k8s/kubernetes-server-linux-amd64.tar.gz
 ```
 
 解压二进制包：
@@ -2819,6 +2799,8 @@ kubectl get role,rolebinding -n mytest
 
 ## 4  搭建集群监控平台系统
 
+>  关于监控平台的使用，整理了一份文档：[Prometheus](docs/Prometheus.md) （学会 k8s 之后再来看）
+
 ### 4.1 监控指标
 
 一个好的监控系统主要监控以下内容：
@@ -4116,3 +4098,17 @@ kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          6d
 完结。......
 
 恭喜你！完成了第一阶段的学习。
+
+
+
+
+
+## 下一阶段学习
+
+
+
+传送门...... （考完更新！）
+
+- [CKA 认证]()
+- [CKS 认证]()
+
