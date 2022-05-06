@@ -29,8 +29,8 @@ kubernetes-study
 
 ## 前置内容
 
-- Linux | [Linux 入门笔记](docs/Linux.md) 
-- Docker | [Docker 入门笔记](docs/Docker.md)  
+- Linux | [Linux 入门笔记](Linux.md) 
+- Docker | [Docker 入门笔记](Docker.md)  
 
 ## 目录
 
@@ -2799,7 +2799,7 @@ kubectl get role,rolebinding -n mytest
 
 ## 4  搭建集群监控平台系统
 
->  关于监控平台的使用，整理了一份文档：[Prometheus](docs/Prometheus.md) （学会 k8s 之后再来看）
+>  关于监控平台的使用，整理了一份文档：[Prometheus](Prometheus.md) （学会 k8s 之后再来看）
 
 ### 4.1 监控指标
 
