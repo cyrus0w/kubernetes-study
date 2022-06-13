@@ -912,6 +912,14 @@ LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
 EOF
+
+# 名词解释
+# --cert-file=/etc/etcd/kube-etcd.pem \\ # 对外提供服务的服务器证书
+# --key-file=/etc/etcd/kube-etcd-key.pem \\ # 服务器证书对应的私钥
+# --peer-cert-file=/etc/etcd/kube-etcd-peer.pem \\ # peer 证书，用于 etcd 节点之间的相互访问
+# --peer-key-file=/etc/etcd/kube-etcd-peer-key.pem \\ # peer 证书对应的私钥
+# --trusted-ca-file=/etc/etcd/cluster-root-ca.pem \\ # 用于验证访问 etcd 服务器的客户端证书的 CA 根证书
+# --peer-trusted-ca-file=/etc/etcd/cluster-root-ca.pem\\ # 用于验证 peer 证书的 CA 根证书
 ```
 
 【k8smaster1 配置完毕！】
